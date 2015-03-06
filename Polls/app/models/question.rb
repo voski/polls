@@ -28,4 +28,20 @@ class Question < ActiveRecord::Base
   )
 
   has_many :responses, through: :answer_choices, source: :responses
+
+  def title
+    text
+  end
+
+  def results
+    hash = {}
+    raw_data = answer_choices
+    .select('answer_choices.*, COUNT(responses.id) AS response_count')
+    .joins('LEFT OUTER JOIN responses ON answer_choices.id = responses.answer_id')
+    .group('answer_choices.id')
+    .having('answer_choices.question_id = ?', id)
+
+    raw_data.each { |i| hash[i.text] = i.response_count }
+    hash
+  end
 end

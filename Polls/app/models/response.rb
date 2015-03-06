@@ -11,7 +11,9 @@
 
 class Response < ActiveRecord::Base
   validates :user_id, :answer_id, presence: true
-
+  validate :respondent_has_not_already_answered_question
+  validate :respondent_is_not_the_author
+  
   belongs_to(
     :respondent,
     foreign_key: :user_id,
@@ -35,6 +37,14 @@ class Response < ActiveRecord::Base
 
   private
     def respondent_has_not_already_answered_question
+      if sibling_responses.exists?(user_id: :user_id, user_id: user_id)
+        errors[:respondent] << 'Cannot answer same question twice!'
+      end
+    end
 
+    def respondent_is_not_the_author
+      if question.poll.author_id = user_id
+        errors[:respondent] << 'Cannot respond to own poll!'
+      end
     end
 end
